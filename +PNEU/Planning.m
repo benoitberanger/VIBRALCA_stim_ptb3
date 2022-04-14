@@ -8,9 +8,15 @@ end
 
 %% Paradigme
 
-Parameters.RestDuration        = [10 12];  % second
-Parameters.NrRepetitions       = 20;
+Parameters.RestDuration        = [6 10];  % second
+Parameters.NrRepetitions       = 10;
 Parameters.ActivityDuration    = 6;  % second
+
+Parameters.ramp_time = 5.000; % seconds
+Parameters.step_time = 0.100; % seconds
+
+Parameters.valve_opening_min = 40; % highest value when the valve remains opened
+Parameters.valve_opening_max = 80; % lowest value to have the valve fully opened
 
 switch S.OperationMode
     case 'Acquisition'
@@ -28,11 +34,7 @@ switch S.OperationMode
         
 end
 
-Parameters.valve_opening_min = 40; % highest value when the valve remains opened
-Parameters.valve_opening_max = 80; % lowest value to have the valve fully opened
 
-Parameters.ramp_time = 5.000; % seconds
-Parameters.step_time = 0.100; % seconds
 
 
 %% Randomization the trials
@@ -114,7 +116,8 @@ if nargout < 1
     fprintf(' \n Total stim duration : %g seconds \n' , NextOnset(EP) )
     fprintf( '\n' )
     
-    EP.Plot
+    EP.Plot()
+    EP.PlotHRF(1.5)
     
 end
 

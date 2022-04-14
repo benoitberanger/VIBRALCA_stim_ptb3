@@ -9,7 +9,7 @@ end
 %% Paradigme
 
 Parameters.RestDuration        = [10 12];  % second
-Parameters.NrRepetitions       = 10;
+Parameters.NrRepetitions       = 20;
 Parameters.ActivityDuration    = 6;  % second
 
 switch S.OperationMode
@@ -41,15 +41,18 @@ Parameters.step_time = 0.100; % seconds
 Parameters.ListOfConditions_str = {'extD', 'flexD', 'extG', 'flexG'};
 Parameters.ListOfConditions_num = [    1 ,      2 ,     3 ,      4 ];
 
-vect = Shuffle([ones(1,Parameters.NrRepetitions)*1 ones(1,Parameters.NrRepetitions)*2 ones(1,Parameters.NrRepetitions)*3 ones(1,Parameters.NrRepetitions)*4]);
-while true
-    vect_str = num2str(vect);
-    vect_str = strrep(vect_str,' ','');
-    if any(regexp(vect_str,'11')) || any(regexp(vect_str,'22')) || any(regexp(vect_str,'33')) || any(regexp(vect_str,'44'))
-        vect = Shuffle([ones(1,Parameters.NrRepetitions)*1 ones(1,Parameters.NrRepetitions)*2 ones(1,Parameters.NrRepetitions)*3 ones(1,Parameters.NrRepetitions)*4]);
+for rep = 1 : Parameters.NrRepetitions
+    
+    if rep == 1
+        vect = Shuffle(Parameters.ListOfConditions_num);
     else
-        break
+        shuffled = Shuffle(Parameters.ListOfConditions_num);
+        while vect(end) == shuffled(1)
+            shuffled = Shuffle(Parameters.ListOfConditions_num);
+        end
+        vect = [vect shuffled];
     end
+    
 end
 
 Parameters.ConditionOrder_num = vect;

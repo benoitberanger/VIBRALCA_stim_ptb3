@@ -39,7 +39,7 @@ try
     
     % Loop over the EventPlanning
     for evt = 1 : size( EP.Data , 1 )
-                
+        
         Common.CommandWindowDisplay( EP, evt );
         
         switch EP.Data{evt,1}
@@ -108,11 +108,22 @@ try
                 timestamp = conditionOnset;
                 for idx = 1 : length(opening_vect)
                     
+                    % Fetch keys
+                    [keyIsDown, ~, keyCode] = KbCheck;
+                    
+                    if keyIsDown
+                        % ~~~ ESCAPE key ? ~~~
+                        [ EXIT, StopTime ] = Common.Interrupt( keyCode, ER, RR, StartTime );
+                        if EXIT
+                            break
+                        end
+                    end
+                    
                     % Send stim
                     if strcmp(S.StimONOFF,'ON')
                         
                         S.FTDI.Start(channel, opening_vect(idx));
-                        fprintf('Started  %s channel=%s stimulation, value=%02d \n', EP.Data{evt,1}, channel, opening_vect(idx))
+                        fprintf('Started  %s channel=%d stimulation, value=%02d \n', EP.Data{evt,1}, channel, opening_vect(idx))
                         timestamp = WaitSecs('UntilTime', timestamp + Parameters.step_time);
                         
                     end

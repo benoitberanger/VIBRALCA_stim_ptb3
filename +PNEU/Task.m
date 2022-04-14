@@ -16,22 +16,15 @@ try
     
     %% Prepare event record and keybinf logger
     
-    % [ ER, RR, KL, SR ] = Common.PrepareRecorders( EP );
     [ ER, RR, KL ] = Common.PrepareRecorders( EP );
     
     % This is a pointer copy, not a deep copy
     S.EP = EP;
     S.ER = ER;
     S.RR = KL;
-    % S.SR = SR;
     
     
     %% Prepare objects
-    
-    % [ QUESTION, YES, NO ] = PNEU.Prepare.Text;
-    % [ CROSS             ] = PNEU.Prepare.Cross;
-    % [ CURSOR            ] = PNEU.Prepare.Cursor;
-    % [ RECT_YES, RECT_NO ] = PNEU.Prepare.Rect;
     
     
     %% Eyelink
@@ -46,28 +39,12 @@ try
     
     % Loop over the EventPlanning
     for evt = 1 : size( EP.Data , 1 )
-        
+                
         Common.CommandWindowDisplay( EP, evt );
         
         switch EP.Data{evt,1}
             
             case 'StartTime' % --------------------------------------------
-                
-                % Fetch initialization data
-                % switch S.InputMethod
-                %     case 'Joystick'
-                %         [newX, newY] = PNEU.QueryJoystickData( CURSOR.screenX, CURSOR.screenY );
-                %     case 'Mouse'
-                %         SetMouse(CURSOR.Xorigin,CURSOR.Yorigin,CURSOR.wPtr);
-                %         [newX, newY] = PNEU.QueryMouseData( CURSOR.wPtr, CURSOR.Xorigin, CURSOR.Yorigin );
-                % end
-                
-                % Initialize cursor position
-                % CURSOR.Move(newX,newY);
-                
-                % CROSS.Draw
-                % Screen('DrawingFinished',S.PTB.wPtr);
-                % Screen('Flip',S.PTB.wPtr);
                 
                 StartTime = Common.StartTimeEvent;
                 
@@ -78,29 +55,14 @@ try
                 
             case 'Rest' % -------------------------------------------------
                 
-                % CROSS.Draw
-                % PNEU.UpdateCursor( CURSOR )
-                
                 when = StartTime + EP.Data{evt,2} - S.PTB.slack;
-                % Screen('DrawingFinished', S.PTB.wPtr);
-                % lastFlipOnset = Screen('Flip', S.PTB.wPtr, when);
                 lastFlipOnset = WaitSecs('UntilTime', when);
-                % SR.AddSample([lastFlipOnset-StartTime CURSOR.X CURSOR.Y])
-                % Common.SendParPortMessage(EP.Data{evt,1});
                 ER.AddEvent({EP.Data{evt,1} lastFlipOnset-StartTime [] EP.Data{evt,4:end}});
-                RR.AddEvent({[EP.Data{evt,1} '_CROSS'] lastFlipOnset-StartTime [] []});
                 
                 when = StartTime + EP.Data{evt+1,2} - S.PTB.slack;
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 secs = lastFlipOnset;
                 while secs < when
-                    
-                    % CROSS.Draw
-                    % PNEU.UpdateCursor( CURSOR )
-                    
-                    % Screen('DrawingFinished', S.PTB.wPtr);
-                    % lastFlipOnset = Screen('Flip', S.PTB.wPtr);
-                    % SR.AddSample([lastFlipOnset-StartTime CURSOR.X CURSOR.Y])
                     
                     % Fetch keys
                     [keyIsDown, secs, keyCode] = KbCheck;
@@ -120,39 +82,47 @@ try
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
                 
-            case {'A', 'B', 'C', 'D'} % --------------------------------------
+            case {'extD', 'flexD', 'extG', 'flexG'} % --------------------------------------
                 
-                % onset_YES = [];
-                % onset_NO  = [];
-                
-                % CROSS.Draw
-                % PNEU.UpdateCursor( CURSOR )
-                
-                when = StartTime + EP.Data{evt,2} - S.PTB.slack;
-                % Screen('DrawingFinished', S.PTB.wPtr);
-                % conditionFlipOnset = Screen('Flip', S.PTB.wPtr, when);
-                conditionFlipOnset = WaitSecs('UntilTime', when);
-                
-                % Send stim
-                if strcmp(S.StimONOFF,'ON')
-                    switch EP.Data{evt,1}
-                        case 'Bone'
-                            S.FTDI.Start(1);
-                            fprintf('Started BONE   channel=1 stimulation \n')
-                        case 'Tendon'
-                            S.FTDI.Start(2);
-                            fprintf('Started TENDON channel=2 stimulation \n')
-                    end
+                switch EP.Data{evt,1}
+                    case  'extD'
+                        channel = 1;
+                    case 'flexD'
+                        channel = 2;
+                    case  'extG'
+                        channel = 3;
+                    case 'flexG'
+                        channel = 4;
                 end
                 
-                % SR.AddSample([conditionFlipOnset-StartTime CURSOR.X CURSOR.Y])
-                % Common.SendParPortMessage(EP.Data{evt,1});
-                ER.AddEvent({EP.Data{evt,1} conditionFlipOnset-StartTime [] EP.Data{evt,4:end}});
-                RR.AddEvent({[EP.Data{evt,1} '_CROSS'] conditionFlipOnset-StartTime [] []});
+                when = StartTime + EP.Data{evt,2} - S.PTB.slack;
+                conditionOnset = WaitSecs('UntilTime', when);
+                ER.AddEvent({EP.Data{evt,1} conditionOnset-StartTime [] EP.Data{evt,4:end}});
                 
-                when = conditionFlipOnset + EP.Data{evt,3} - S.PTB.slack;
+                opening_vect = linspace(...
+                    Parameters.valve_opening_min,...
+                    Parameters.valve_opening_max,...
+                    round(Parameters.ramp_time/Parameters.step_time));
+                opening_vect = round(opening_vect);
+                
+                timestamp = conditionOnset;
+                for idx = 1 : length(opening_vect)
+                    
+                    % Send stim
+                    if strcmp(S.StimONOFF,'ON')
+                        
+                        S.FTDI.Start(channel, opening_vect(idx));
+                        fprintf('Started  %s channel=%s stimulation, value=%02d \n', EP.Data{evt,1}, channel, opening_vect(idx))
+                        timestamp = WaitSecs('UntilTime', timestamp + Parameters.step_time);
+                        
+                    end
+                    
+                end
+                
+                
+                when = conditionOnset + EP.Data{evt,3} - S.PTB.slack;
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                secs = conditionFlipOnset;
+                secs = conditionOnset;
                 while secs < when
                     
                     % Fetch keys
@@ -175,18 +145,18 @@ try
                 % Stop stim
                 if strcmp(S.StimONOFF,'ON')
                     switch EP.Data{evt,1}
-                        case 'A'
+                        case  'extD'
                             S.FTDI.Stop(1);
-                            fprintf('Stopped A channel=1 stimulation \n')
-                        case 'B'
+                            fprintf('Stopped  extD channel=1 stimulation \n')
+                        case 'flexD'
                             S.FTDI.Stop(2);
-                            fprintf('Stopped B channel=2 stimulation \n')
-                        case 'C'
+                            fprintf('Stopped flexD channel=2 stimulation \n')
+                        case  'extG'
                             S.FTDI.Stop(3);
-                            fprintf('Stopped C channel=3 stimulation \n')
-                        case 'D'
+                            fprintf('Stopped  extG channel=3 stimulation \n')
+                        case 'flexG'
                             S.FTDI.Stop(4);
-                            fprintf('Stopped D channel=4 stimulation \n')
+                            fprintf('Stopped flexG channel=4 stimulation \n')
                     end
                 end
                 
@@ -206,15 +176,7 @@ try
     
     %% End of stimulation
     
-    % Close the audio device
-    % PsychPortAudio('Close');
-    
-    % TaskData = Common.EndOfStimulation( TaskData, EP, ER, RR, KL, SR, StartTime, StopTime );
     TaskData = Common.EndOfStimulation( TaskData, EP, ER, RR, KL, StartTime, StopTime );
-    
-    % TaskData.BR = BR;
-    % assignin('base','BR', BR)
-    
     
 catch err
     

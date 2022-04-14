@@ -14,10 +14,10 @@ try
         case 'PNEU'
             names = {
                 'Rest'
-                'A'
-                'B'
-                'C'
-                'D'
+                'extD'
+                'flexD'
+                'extG'
+                'flexG'
                 };
             
         case 'EyelinkCalibration'

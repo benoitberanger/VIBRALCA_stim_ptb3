@@ -8,27 +8,38 @@ end
 
 %% Paradigme
 
+Parameters.RestDuration        = [10 12];  % second
+Parameters.NrRepetitions       = 10;
+Parameters.ActivityDuration    = 6;  % second
+
 switch S.OperationMode
     case 'Acquisition'
-        Parameters.RestDuration        = [10 15];  % second
-        Parameters.NrRepetitions       = 6;
-        Parameters.ActivityDuration    = 20;  % second
+        % pass
+        
     case 'FastDebug'
         Parameters.RestDuration        = [0.5 1];  % second
         Parameters.NrRepetitions       = 2;
-        Parameters.ActivityDuration    = 3;  % second
+        Parameters.ActivityDuration    = 6;  % second
+        
     case 'RealisticDebug'
-        Parameters.RestDuration        = [10 15];  % second
-        Parameters.NrRepetitions       = 6;
-        Parameters.ActivityDuration    = 20;  % second
+        Parameters.RestDuration        = [0.5 1];  % second
+        Parameters.NrRepetitions       = 2;
+        Parameters.ActivityDuration    = 6;  % second
+        
 end
+
+Parameters.valve_opening_min = 40; % highest value when the valve remains opened
+Parameters.valve_opening_max = 80; % lowest value to have the valve fully opened
+
+Parameters.ramp_time = 5.000; % seconds
+Parameters.step_time = 0.100; % seconds
 
 
 %% Randomization the trials
 % Maximum 1 in a row
 
-Parameters.ListOfConditions_str = {'A', 'B', 'C', 'D'};
-Parameters.ListOfConditions_num = [ 1 ,  2 ,  3 ,  4 ];
+Parameters.ListOfConditions_str = {'extD', 'flexD', 'extG', 'flexG'};
+Parameters.ListOfConditions_num = [    1 ,      2 ,     3 ,      4 ];
 
 vect = Shuffle([ones(1,Parameters.NrRepetitions)*1 ones(1,Parameters.NrRepetitions)*2 ones(1,Parameters.NrRepetitions)*3 ones(1,Parameters.NrRepetitions)*4]);
 while true
